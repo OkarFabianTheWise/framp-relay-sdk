@@ -161,8 +161,6 @@ interface RelayerConfig {
 
 - Always call `verifyTransactionStatus` after sending tokens.
 - Implement retry logic and handle network errors gracefully.
-- Store transaction signatures for future reference.
-- Adjust slippage settings according to market volatility.
 - Be mindful of rate limits for external APIs.
 
 ---
