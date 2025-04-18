@@ -1,6 +1,6 @@
 # 🛰️ Framp Relay SDK
 
-A seamless SDK for **token swapping and gifting** on Solana, with **transaction verification** powered by [Solscan](https://solscan.io). The Framp Relay SDK simplifies complex token flows into single atomic actions.
+A seamless SDK for **routing transactions to your needs, gifting, checkout..** on Solana, with **transaction verification** powered by [Jupiter](https://x.com/jupiterExchange). The Framp Relay SDK simplifies complex token flows into single atomic actions.
 
 ---
 
