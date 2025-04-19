@@ -1,78 +1,47 @@
-import {
-    PublicKey,
-    VersionedTransaction,
-  } from "@solana/web3.js";
-  import axios from "axios";
-  
-  export interface RelayerConfig {
-    solscanApiKey?: string;
-    solscanApiUrl?: string;
-    timeout?: number;
+import { VersionedTransaction } from "@solana/web3.js";
+import { RelayerConfig, GiftParams, AirtimeParams, TransactionResult } from "../types";
+import { sendToken } from "../services/gift-token";
+import { Airtime, confirmAirtimeTransaction } from "../services/gift-airtime";
+import axios from "axios";
+
+export class FrampRelayer {
+  private readonly JUPITER_SWAP_URL = "https://quote-api.jup.ag/v6/swap";
+  private readonly JUPITER_QUOTE_URL = "https://quote-api.jup.ag/v6/quote";
+  private readonly solscanApiUrl: string;
+  private readonly solscanApiKey: string;
+  private readonly timeout: number;
+  private readonly airbillsVendorUrl: string;
+  private readonly airbillsSecretKey: string;
+
+  constructor(config?: RelayerConfig) {
+    this.solscanApiUrl = config?.solscanApiUrl || "https://pro-api.solscan.io/v2.0/transaction/detail";
+    this.solscanApiKey = config?.solscanApiKey || process.env.SOLSCAN_API_KEY || "";
+    this.timeout = config?.timeout || 60000;
+    this.airbillsVendorUrl = config?.airbillsVendorUrl || "https://vendor.airbillspay.com";
+    this.airbillsSecretKey = config?.airbillsSecretKey || process.env.AIRBILLS_SECRET_KEY || "";
   }
-  
-  export interface GiftParams {
-    walletPublicKey: PublicKey;
-    recipient: string;
-    amount: number;
-    tokenMint?: string;
+
+  async giftToken(params: GiftParams): Promise<TransactionResult> {
+    return sendToken(params, this.JUPITER_QUOTE_URL, this.JUPITER_SWAP_URL);
   }
-  
-  export interface TransactionResult {
-    transaction: VersionedTransaction;
-    txBase64: string;
-    signature?: string;
+
+  async sendAirtime(params: AirtimeParams): Promise<TransactionResult> {
+    return Airtime(params, this.airbillsVendorUrl, this.airbillsSecretKey);
   }
-  
-  export class FrampRelayer {
-    private readonly JUPITER_SWAP_URL = "https://quote-api.jup.ag/v6/swap";
-    private readonly JUPITER_QUOTE_URL = "https://quote-api.jup.ag/v6/quote";
-    private readonly solscanApiUrl: string;
-    private readonly solscanApiKey: string;
-    private readonly timeout: number;
-  
-    constructor(config?: RelayerConfig) {
-      this.solscanApiUrl = config?.solscanApiUrl || "https://pro-api.solscan.io/v2.0/transaction/detail";
-      this.solscanApiKey = config?.solscanApiKey || process.env.SOLSCAN_API_KEY || "";
-      this.timeout = config?.timeout || 60000;
-    }
-  
-    async sendGiftToken({
-      walletPublicKey,
-      recipient,
-      amount,
-      tokenMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-    }: GiftParams): Promise<TransactionResult> {
-      const inputMint = "So11111111111111111111111111111111111111112"; // SOL
-      const lamports = Math.floor(amount * 1e9);
-  
-      const quoteResp = await axios.get(this.JUPITER_QUOTE_URL, {
-        params: {
-          inputMint,
-          outputMint: tokenMint,
-          amount: lamports,
-          slippageBps: 1000,
-        },
-      });
-  
-      const quote = quoteResp.data;
-      const swapPayload = {
-        userPublicKey: walletPublicKey.toBase58(),
-        quoteResponse: quote,
-        destinationTokenAccount: recipient,
-        computeUnitPriceMicroLamports: 30000000,
-      };
-  
-      const swapResp = await axios.post(this.JUPITER_SWAP_URL, swapPayload);
-      const swapTxB64 = swapResp.data.swapTransaction;
-      const swapTxBytes = Buffer.from(swapTxB64, "base64");
-      const transaction = VersionedTransaction.deserialize(swapTxBytes);
-  
-      return {
-        transaction,
-        txBase64: swapTxB64
-      };
-    }
-  
+
+  async payServiceFee(params: GiftParams): Promise<TransactionResult> {
+    return sendToken(params, this.JUPITER_QUOTE_URL, this.JUPITER_SWAP_URL);
+  }
+
+  async confirmAirtimeTransaction(id: string): Promise<any> {
+    return confirmAirtimeTransaction(id, this.airbillsVendorUrl, this.airbillsSecretKey);
+  }
+
+  /**
+   * Verifies the status of a transaction using Solscan API 
+   * @param signature Transaction signature
+   * @returns True if the transaction is successful, false otherwise
+   *  */
     async verifyTransactionStatus(signature: string): Promise<boolean> {
       try {
         const response = await axios.get(this.solscanApiUrl, {

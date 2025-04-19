@@ -1,28 +1,65 @@
 # 🛰️ Framp Relay SDK
 
-A seamless SDK for **routing transactions to your needs, gifting, checkout..** on Solana, with **transaction verification** powered by [Jupiter](https://x.com/jupiterExchange). The Framp Relay SDK simplifies complex token flows into single atomic actions.
+A powerful SDK that simplifies complex token operations into **single atomic transactions** on Solana. Whether you're **gifting tokens you don't own**, **accessing token-gated services**, or **buying airtime with any token** – Framp Relay handles the complexity for you.
 
 ---
 
-## 🚀 Overview
+## 🎯 Key Solutions
 
-The **Framp Relay SDK** enables developers to:
+### 🎁 Effortless Token Gifting
 
-- Swap tokens using the best rates via the **Jupiter Aggregator**
-- Send tokens across wallets in one transaction
-- Verify transactions using **Solscan API** as the source of truth
+Send **any SPL token** to a friend—even if you don’t currently own it.
 
-All while supporting **any SPL token** and providing **TypeScript support** out of the box.
+```ts
+// Gift 1000 PEPE tokens using just SOL or USDC
+await relayer.giftToken({
+  walletPublicKey: yourWallet,
+  recipient: friendAddress,
+  amount: 1000,
+  tokenMint: PEPE_TOKEN_MINT
+});
+```
 
 ---
 
-## ✨ Features
+### 🔑 One-Click Service Access
 
-- ✅ One-step token **swapping + sending**
-- 🔄 Integrated with **Jupiter API** for optimal swap routes
-- 🔍 Transaction verification via **Solscan**
-- 💸 Supports **all SPL tokens**
-- 🧠 Fully typed with **TypeScript**
+Access token-gated services **without manually swapping tokens**.
+
+```ts
+// Pay for a service that requires ACCESS_TOKEN
+await relayer.payServiceFee({
+  walletPublicKey: yourWallet,
+  recipient: serviceAddress,
+  amount: servicePrice,
+  tokenMint: ACCESS_TOKEN_MINT
+});
+```
+
+---
+
+### 📱 Direct Airtime Purchase
+
+Purchase airtime **instantly** with your favorite token.
+
+```ts
+await relayer.sendAirtime({
+  phoneNumber: "1234567890",
+  amount: 100,
+  token: "USDT" | "ANY SPL TOKEN",
+  userAddress: yourWallet
+});
+```
+
+---
+
+## 🚀 What Makes It Special
+
+- ✨ **Single-Transaction Magic** — No more chaining swaps and transfers
+- 🧠 **Token-Agnostic** — Pay with what you have, deliver what’s needed
+- 🏦 **Best Rates** — Powered by [Jupiter](https://x.com/jupiterExchange) for optimal routing
+- 🛡️ **Transaction Certainty** — Verified via [Solscan](https://solscan.io) for reliability
+- 🪄 **Zero Token Holdings Required** — Gift or pay with tokens you don’t own
 
 ---
 
@@ -40,9 +77,10 @@ npm install framp-relay-sdk
 import { FrampRelayer } from 'framp-relay-sdk';
 import { PublicKey } from '@solana/web3.js';
 
-// Initialize the relayer
+// Initialize with configuration
 const relayer = new FrampRelayer({
-  solscanApiKey: 'your-solscan-api-key'
+  solscanApiKey: 'your-solscan-api-key',
+  airbillsSecretKey: 'your-airbills-secret-key'
 });
 
 const walletPublicKey = new PublicKey('your-wallet-address');
@@ -50,7 +88,7 @@ const recipient = 'recipient-address';
 const amount = 100; // in token units (not lamports)
 
 async function sendAndVerify() {
-  const txResult = await relayer.sendGiftToken({
+  const txResult = await relayer.giftToken({
     walletPublicKey,
     recipient,
     amount,
@@ -66,11 +104,11 @@ async function sendAndVerify() {
 
 ## 🔐 Source of Truth: Solscan Integration
 
-Solscan is used for verifying transaction status, providing:
+Solscan powers reliable, external verification:
 
-- ✅ Independent confirmation outside RPC nodes
-- 🧾 Access to detailed transaction data
-- 🚀 High reliability for production environments
+- ✅ Confirm transaction success independently of RPCs  
+- 🧾 Access rich transaction data  
+- 🚀 Production-grade performance  
 
 ---
 
@@ -78,10 +116,8 @@ Solscan is used for verifying transaction status, providing:
 
 ### 1. One-Click Token Payments
 
-Send tokens in a single transaction—even if the user doesn't hold the correct token.
-
 ```ts
-const txResult = await relayer.sendGiftToken({
+const txResult = await relayer.giftToken({
   walletPublicKey: userWallet,
   recipient: merchantAddress,
   amount: 100,
@@ -93,11 +129,9 @@ const txResult = await relayer.sendGiftToken({
 
 ### 2. Automated Token Swapping
 
-Use in checkout flows to simplify token acceptance.
-
 ```ts
 async function handleCheckout(amount: number) {
-  const tx = await relayer.sendGiftToken({
+  const tx = await relayer.giftToken({
     walletPublicKey: customerWallet,
     recipient: merchantWallet,
     amount,
@@ -113,11 +147,9 @@ async function handleCheckout(amount: number) {
 
 ### 3. Cross-Token Payments
 
-Accept payments in any token (e.g., receive USDC even if user pays with something else).
-
 ```ts
 async function acceptPayment(amountInUSDC: number) {
-  const tx = await relayer.sendGiftToken({
+  const tx = await relayer.giftToken({
     walletPublicKey: payerWallet,
     recipient: yourWallet,
     amount: amountInUSDC,
@@ -132,7 +164,11 @@ async function acceptPayment(amountInUSDC: number) {
 
 ```ts
 try {
-  const txResult = await relayer.sendGiftToken({ walletPublicKey, recipient, amount });
+  const txResult = await relayer.giftToken({ 
+    walletPublicKey, 
+    recipient, 
+    amount 
+  });
 
   const isConfirmed = await relayer.verifyTransactionStatus(txResult.signature);
   if (!isConfirmed) {
@@ -150,8 +186,8 @@ try {
 ```ts
 interface RelayerConfig {
   solscanApiKey?: string;    // Your Solscan API key
-  solscanApiUrl?: string;    // Optional custom API endpoint
-  timeout?: number;          // Max wait time for verification (in ms)
+  solscanApiUrl?: string;    // Optional custom Solscan endpoint
+  timeout?: number;          // Verification timeout in ms
 }
 ```
 
@@ -159,17 +195,18 @@ interface RelayerConfig {
 
 ## 🧠 Best Practices
 
-- Always call `verifyTransactionStatus` after sending tokens.
-- Implement retry logic and handle network errors gracefully.
-- Be mindful of rate limits for external APIs.
+- ✅ Always verify transactions with `verifyTransactionStatus`
+- 🕒 Handle timeouts and retries gracefully
+- 🧾 Store signatures for future reference
+- ❌ Don’t assume RPCs alone are enough
 
 ---
 
 ## 📉 Rate Limits
 
-- Respect Solscan API rate limits.
-- Use caching or queuing for high-frequency apps.
-- Batch verification requests where possible.
+- 🚫 Respect Solscan API limits  
+- 📦 Queue high-volume requests  
+- 💾 Cache verification results where applicable  
 
 ---
 
@@ -177,4 +214,6 @@ interface RelayerConfig {
 
 - 🔗 [Framp Relay GitHub Repository](https://github.com/OkarFabianTheWise/framp-relay-sdk)
 - 💬 [Join the Community](https://t.me/fiatrouter)
-- 🛠️ Built for the Solana ecosystem, powered by [Jupiter Aggregator](https://jup.ag) and [Solscan](https://solscan.io)
+- 🛠️ Built for the **Solana** ecosystem, powered by [Jupiter Aggregator](https://jup.ag) and [Solscan](https://solscan.io)  
+- ⚡ [Jupiter on X](https://x.com/jupiterExchange)
+- ⚡ [Fiatrouter on X](https://x.com/fiatrouter)
