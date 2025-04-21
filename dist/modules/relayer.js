@@ -13,7 +13,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FrampRelayer = void 0;
-const web3_js_1 = require("@solana/web3.js");
+const gift_token_1 = require("../services/gift-token");
+const gift_airtime_1 = require("../services/gift-airtime");
 const axios_1 = __importDefault(require("axios"));
 class FrampRelayer {
     constructor(config) {
@@ -22,37 +23,34 @@ class FrampRelayer {
         this.solscanApiUrl = (config === null || config === void 0 ? void 0 : config.solscanApiUrl) || "https://pro-api.solscan.io/v2.0/transaction/detail";
         this.solscanApiKey = (config === null || config === void 0 ? void 0 : config.solscanApiKey) || process.env.SOLSCAN_API_KEY || "";
         this.timeout = (config === null || config === void 0 ? void 0 : config.timeout) || 60000;
+        this.airbillsVendorUrl = (config === null || config === void 0 ? void 0 : config.airbillsVendorUrl) || "https://vendor.airbillspay.com";
+        this.airbillsSecretKey = (config === null || config === void 0 ? void 0 : config.airbillsSecretKey) || process.env.AIRBILLS_SECRET_KEY || "";
     }
-    sendGiftToken(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ walletPublicKey, recipient, amount, tokenMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-         }) {
-            const inputMint = "So11111111111111111111111111111111111111112"; // SOL
-            const lamports = Math.floor(amount * 1e9);
-            const quoteResp = yield axios_1.default.get(this.JUPITER_QUOTE_URL, {
-                params: {
-                    inputMint,
-                    outputMint: tokenMint,
-                    amount: lamports,
-                    slippageBps: 1000,
-                },
-            });
-            const quote = quoteResp.data;
-            const swapPayload = {
-                userPublicKey: walletPublicKey.toBase58(),
-                quoteResponse: quote,
-                destinationTokenAccount: recipient,
-                computeUnitPriceMicroLamports: 30000000,
-            };
-            const swapResp = yield axios_1.default.post(this.JUPITER_SWAP_URL, swapPayload);
-            const swapTxB64 = swapResp.data.swapTransaction;
-            const swapTxBytes = Buffer.from(swapTxB64, "base64");
-            const transaction = web3_js_1.VersionedTransaction.deserialize(swapTxBytes);
-            return {
-                transaction,
-                txBase64: swapTxB64
-            };
+    giftToken(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return (0, gift_token_1.sendToken)(params, this.JUPITER_QUOTE_URL, this.JUPITER_SWAP_URL);
         });
     }
+    sendAirtime(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return (0, gift_airtime_1.Airtime)(params, this.airbillsVendorUrl, this.airbillsSecretKey);
+        });
+    }
+    payServiceFee(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return (0, gift_token_1.sendToken)(params, this.JUPITER_QUOTE_URL, this.JUPITER_SWAP_URL);
+        });
+    }
+    confirmAirtimeTransaction(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return (0, gift_airtime_1.confirmAirtimeTransaction)(id, this.airbillsVendorUrl, this.airbillsSecretKey);
+        });
+    }
+    /**
+     * Verifies the status of a transaction using Solscan API
+     * @param signature Transaction signature
+     * @returns True if the transaction is successful, false otherwise
+     *  */
     verifyTransactionStatus(signature) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;

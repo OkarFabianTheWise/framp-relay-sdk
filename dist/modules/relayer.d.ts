@@ -1,27 +1,21 @@
-import { PublicKey, VersionedTransaction } from "@solana/web3.js";
-export interface RelayerConfig {
-    solscanApiKey?: string;
-    solscanApiUrl?: string;
-    timeout?: number;
-}
-export interface GiftParams {
-    walletPublicKey: PublicKey;
-    recipient: string;
-    amount: number;
-    tokenMint?: string;
-}
-export interface TransactionResult {
-    transaction: VersionedTransaction;
-    txBase64: string;
-    signature?: string;
-}
+import { RelayerConfig, GiftParams, AirtimeParams, TransactionResult } from "../types";
 export declare class FrampRelayer {
     private readonly JUPITER_SWAP_URL;
     private readonly JUPITER_QUOTE_URL;
     private readonly solscanApiUrl;
     private readonly solscanApiKey;
     private readonly timeout;
+    private readonly airbillsVendorUrl;
+    private readonly airbillsSecretKey;
     constructor(config?: RelayerConfig);
-    sendGiftToken({ walletPublicKey, recipient, amount, tokenMint, }: GiftParams): Promise<TransactionResult>;
+    giftToken(params: GiftParams): Promise<TransactionResult>;
+    sendAirtime(params: AirtimeParams): Promise<TransactionResult>;
+    payServiceFee(params: GiftParams): Promise<TransactionResult>;
+    confirmAirtimeTransaction(id: string): Promise<any>;
+    /**
+     * Verifies the status of a transaction using Solscan API
+     * @param signature Transaction signature
+     * @returns True if the transaction is successful, false otherwise
+     *  */
     verifyTransactionStatus(signature: string): Promise<boolean>;
 }

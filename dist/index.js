@@ -1,5 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FrampRelayer = void 0;
+exports.confirmAirtimeTransaction = exports.Airtime = exports.sendToken = exports.FrampRelayer = void 0;
 var relayer_1 = require("./modules/relayer");
 Object.defineProperty(exports, "FrampRelayer", { enumerable: true, get: function () { return relayer_1.FrampRelayer; } });
+var gift_token_1 = require("./services/gift-token");
+Object.defineProperty(exports, "sendToken", { enumerable: true, get: function () { return gift_token_1.sendToken; } });
+var gift_airtime_1 = require("./services/gift-airtime");
+Object.defineProperty(exports, "Airtime", { enumerable: true, get: function () { return gift_airtime_1.Airtime; } });
+Object.defineProperty(exports, "confirmAirtimeTransaction", { enumerable: true, get: function () { return gift_airtime_1.confirmAirtimeTransaction; } });
