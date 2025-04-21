@@ -15,10 +15,16 @@ export interface GiftParams {
   tokenMint?: string;
 }
 
+export interface RouterParams {
+  walletPublicKey: string;
+  amount: number;
+  tokenMint?: string;
+}
+
 export interface AirtimeParams {
   phoneNumber: string;
   amount: number;
-  token: 'USDC' | 'USDT' | 'CBN';
+  token: string;
   fee?: number;
   userAddress: string;
 }
