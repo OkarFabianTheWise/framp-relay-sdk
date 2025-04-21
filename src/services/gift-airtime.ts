@@ -25,7 +25,6 @@ export async function Airtime(
   if (!params.token) throw new Error("Token is required");
 
   let tokensymbol = 'USDC';
-  let airtimeTransaction: Transaction;
   
   // If token is not USDC or USDT, create a swap transaction first
   if (params.token !== USDC && params.token !== USDT) {
