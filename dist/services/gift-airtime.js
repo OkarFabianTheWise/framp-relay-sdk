@@ -20,11 +20,11 @@ const router_1 = require("../utils/router");
 /**
  * Handles airtime gift transactions using AirbillsPay API
  * @param params Airtime transaction parameters
- * @param vendorUrl AirbillsPay vendor URL
+ * @param baseUrl AirbillsPay vendor URL
  * @param secretKey AirbillsPay secret key
  * @returns Transaction details including ID for confirmation
  */
-function Airtime(params, vendorUrl, secretKey) {
+function Airtime(params, baseUrl, secretKey) {
     return __awaiter(this, void 0, void 0, function* () {
         const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
         const USDT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
@@ -47,7 +47,7 @@ function Airtime(params, vendorUrl, secretKey) {
                 tokenMint: params.token
             });
             // Create airtime transaction
-            const airtimeResponse = yield axios_1.default.post(`${vendorUrl}/bills/airtime/paypoint`, {
+            const airtimeResponse = yield axios_1.default.post(`${baseUrl}/airtime/paypoint`, {
                 phoneNumber: params.phoneNumber,
                 amount: params.amount,
                 token: 'USDC',
@@ -92,7 +92,7 @@ function Airtime(params, vendorUrl, secretKey) {
         }
         else {
             // Original flow for USDC/USDT
-            const response = yield axios_1.default.post(`${vendorUrl}/bills/airtime/paypoint`, {
+            const response = yield axios_1.default.post(`${baseUrl}/airtime/paypoint`, {
                 phoneNumber: params.phoneNumber,
                 amount: params.amount,
                 token: tokensymbol,
@@ -123,13 +123,13 @@ function Airtime(params, vendorUrl, secretKey) {
 /**
  * Confirms an airtime transaction with AirbillsPay
  * @param id Transaction ID
- * @param vendorUrl AirbillsPay vendor URL
+ * @param baseUrl AirbillsPay vendor URL
  * @param secretKey AirbillsPay secret key
  * @returns Confirmation result
  */
-function confirmAirtimeTransaction(id, vendorUrl, secretKey) {
+function confirmAirtimeTransaction(id, baseUrl, secretKey) {
     return __awaiter(this, void 0, void 0, function* () {
-        const response = yield axios_1.default.post(`${vendorUrl}/bills/airtime/paypoint/complete`, { id }, {
+        const response = yield axios_1.default.post(`${baseUrl}/airtime/paypoint/complete`, { id }, {
             headers: {
                 secretkey: secretKey,
             },
