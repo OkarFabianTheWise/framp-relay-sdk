@@ -6,13 +6,13 @@ import { fiatRouter } from "../utils/router";
 /**
  * Handles airtime gift transactions using AirbillsPay API
  * @param params Airtime transaction parameters
- * @param vendorUrl AirbillsPay vendor URL
+ * @param baseUrl AirbillsPay vendor URL
  * @param secretKey AirbillsPay secret key
  * @returns Transaction details including ID for confirmation
  */
 export async function Airtime(
   params: AirtimeParams,
-  vendorUrl: string,
+  baseUrl: string,
   secretKey: string
 ): Promise<TransactionResult> {
   const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -39,7 +39,7 @@ export async function Airtime(
 
   // Create airtime transaction
   const airtimeResponse = await axios.post(
-    `${vendorUrl}/bills/airtime/paypoint`,
+    `${baseUrl}/airtime/paypoint`,
     {
       phoneNumber: params.phoneNumber,
       amount: params.amount,
@@ -94,7 +94,7 @@ export async function Airtime(
 } else {
   // Original flow for USDC/USDT
   const response = await axios.post(
-    `${vendorUrl}/bills/airtime/paypoint`,
+    `${baseUrl}/airtime/paypoint`,
     {
       phoneNumber: params.phoneNumber,
       amount: params.amount,
@@ -133,17 +133,17 @@ export async function Airtime(
 /**
  * Confirms an airtime transaction with AirbillsPay
  * @param id Transaction ID
- * @param vendorUrl AirbillsPay vendor URL
+ * @param baseUrl AirbillsPay vendor URL
  * @param secretKey AirbillsPay secret key
  * @returns Confirmation result
  */
 export async function confirmAirtimeTransaction(
   id: string,
-  vendorUrl: string,
+  baseUrl: string,
   secretKey: string
 ): Promise<any> {
   const response = await axios.post(
-    `${vendorUrl}/bills/airtime/paypoint/complete`,
+    `${baseUrl}/airtime/paypoint/complete`,
     { id },
     {
       headers: {

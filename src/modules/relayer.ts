@@ -17,7 +17,7 @@ export class FrampRelayer {
     this.solscanApiUrl = config?.solscanApiUrl || "https://pro-api.solscan.io/v2.0/transaction/detail";
     this.solscanApiKey = config?.solscanApiKey || process.env.SOLSCAN_API_KEY || "";
     this.timeout = config?.timeout || 60000;
-    this.airbillsVendorUrl = config?.airbillsVendorUrl || "https://vendor.airbillspay.com";
+    this.airbillsVendorUrl = config?.airbillsVendorUrl || "/bills";
     this.airbillsSecretKey = config?.airbillsSecretKey || process.env.AIRBILLS_SECRET_KEY || "";
   }
 
