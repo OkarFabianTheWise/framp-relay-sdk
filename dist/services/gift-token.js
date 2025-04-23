@@ -24,14 +24,12 @@ const axios_1 = __importDefault(require("axios"));
  */
 function sendToken(params, jupiterQuoteUrl, jupiterSwapUrl) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { walletPublicKey, recipient, amount, tokenMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-         } = params;
-        const inputMint = "So11111111111111111111111111111111111111112"; // SOL
+        const { walletPublicKey, recipient, amount, mintToPayWith, tokenMintToGift, } = params;
         const lamports = Math.floor(amount * 1e9);
         const quoteResp = yield axios_1.default.get(jupiterQuoteUrl, {
             params: {
-                inputMint,
-                outputMint: tokenMint,
+                inputMint: mintToPayWith,
+                outputMint: tokenMintToGift,
                 amount: lamports,
                 slippageBps: 1000,
             },
@@ -42,6 +40,7 @@ function sendToken(params, jupiterQuoteUrl, jupiterSwapUrl) {
             quoteResponse: quote,
             destinationTokenAccount: recipient,
             computeUnitPriceMicroLamports: 30000000,
+            useVersionedTransaction: false
         };
         const swapResp = yield axios_1.default.post(jupiterSwapUrl, swapPayload);
         const swapTxB64 = swapResp.data.swapTransaction;

@@ -1,4 +1,4 @@
-import { PublicKey, VersionedTransaction } from "@solana/web3.js";
+import { PublicKey, Transaction, VersionedTransaction } from "@solana/web3.js";
 
 export interface RelayerConfig {
   solscanApiKey?: string;
@@ -12,7 +12,8 @@ export interface GiftParams {
   walletPublicKey: PublicKey;
   recipient: string;
   amount: number;
-  tokenMint?: string;
+  mintToPayWith?: string;
+  tokenMintToGift?: string;
 }
 
 export interface RouterParams {
@@ -30,7 +31,7 @@ export interface AirtimeParams {
 }
 
 export interface TransactionResult {
-  transaction: VersionedTransaction;
+  transaction: Transaction | VersionedTransaction;
   txBase64: string;
   signature?: string;
   id?: string;

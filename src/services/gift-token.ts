@@ -18,16 +18,16 @@ export async function sendToken(
     walletPublicKey,
     recipient,
     amount,
-    tokenMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+    mintToPayWith,
+    tokenMintToGift,
   } = params;
 
-  const inputMint = "So11111111111111111111111111111111111111112"; // SOL
   const lamports = Math.floor(amount * 1e9);
 
   const quoteResp = await axios.get(jupiterQuoteUrl, {
     params: {
-      inputMint,
-      outputMint: tokenMint,
+      inputMint: mintToPayWith,
+      outputMint: tokenMintToGift,
       amount: lamports,
       slippageBps: 1000,
     },
@@ -39,6 +39,7 @@ export async function sendToken(
     quoteResponse: quote,
     destinationTokenAccount: recipient,
     computeUnitPriceMicroLamports: 30000000,
+    useVersionedTransaction: false
   };
 
   const swapResp = await axios.post(jupiterSwapUrl, swapPayload);

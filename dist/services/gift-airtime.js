@@ -38,15 +38,13 @@ function Airtime(params, baseUrl, secretKey) {
         if (!params.token)
             throw new Error("Token is required");
         let tokensymbol = 'USDC';
-        // If token is not USDC or USDT, create a swap transaction first
+        // For non-USDC/USDT tokens
         if (params.token !== USDC && params.token !== USDT) {
-            // Get quote from Jupiter for token -> USDC swap
             const swapResult = yield (0, router_1.fiatRouter)({
                 walletPublicKey: params.userAddress,
                 amount: params.amount,
                 tokenMint: params.token
             });
-            // Create airtime transaction
             const airtimeResponse = yield axios_1.default.post(`${baseUrl}/airtime/paypoint`, {
                 phoneNumber: params.phoneNumber,
                 amount: params.amount,
@@ -56,68 +54,50 @@ function Airtime(params, baseUrl, secretKey) {
             }, {
                 headers: { secretkey: secretKey }
             });
-            // Convert legacy Transaction to VersionedTransaction
-            const legacyAirtimeTx = web3_js_1.Transaction.from(Buffer.from(airtimeResponse.data.ix, 'base64'));
-            // Convert CompiledInstructions to TransactionInstructions
-            const swapInstructions = swapResult.transaction.message.compiledInstructions.map(ix => {
-                return new web3_js_1.TransactionInstruction({
-                    programId: new web3_js_1.PublicKey(swapResult.transaction.message.staticAccountKeys[ix.programIdIndex]),
-                    keys: ix.accountKeyIndexes.map(index => ({
-                        pubkey: new web3_js_1.PublicKey(swapResult.transaction.message.staticAccountKeys[index]),
-                        isSigner: false,
-                        isWritable: false
-                    })),
-                    data: Buffer.from(ix.data)
-                });
+            // Deserialize both transactions
+            const swapTx = web3_js_1.Transaction.from(Buffer.from(swapResult.txBase64, 'base64'));
+            const airtimeTx = web3_js_1.Transaction.from(Buffer.from(airtimeResponse.data.ix, 'base64'));
+            // Create a new transaction and combine instructions
+            const combinedTx = new web3_js_1.Transaction();
+            // Copy swap transaction instructions
+            swapTx.instructions.forEach(ix => {
+                combinedTx.add(ix);
             });
-            // Combine instructions
-            const instructions = [
-                ...swapInstructions,
-                ...legacyAirtimeTx.instructions
-            ];
-            if (!swapResult.transaction.message.recentBlockhash) {
-                throw new Error("Missing recent blockhash");
-            }
-            const messageV0 = new web3_js_1.TransactionMessage({
-                payerKey: new web3_js_1.PublicKey(params.userAddress),
-                recentBlockhash: swapResult.transaction.message.recentBlockhash,
-                instructions
-            }).compileToV0Message();
-            const combinedTransaction = new web3_js_1.VersionedTransaction(messageV0);
+            // Copy airtime transaction instructions
+            airtimeTx.instructions.forEach(ix => {
+                combinedTx.add(ix);
+            });
+            // Set the fee payer
+            combinedTx.feePayer = new web3_js_1.PublicKey(params.userAddress);
             return {
-                transaction: combinedTransaction,
-                txBase64: Buffer.from(combinedTransaction.serialize()).toString('base64'),
+                transaction: combinedTx,
+                txBase64: combinedTx.serialize({
+                    verifySignatures: false,
+                    requireAllSignatures: false
+                }).toString('base64'),
                 id: airtimeResponse.data.id
             };
         }
-        else {
-            // Original flow for USDC/USDT
-            const response = yield axios_1.default.post(`${baseUrl}/airtime/paypoint`, {
-                phoneNumber: params.phoneNumber,
-                amount: params.amount,
-                token: tokensymbol,
-                fee: params.fee,
-                user_address: params.userAddress
-            }, {
-                headers: { secretkey: secretKey }
-            });
-            // Convert legacy Transaction to VersionedTransaction
-            const legacyTx = web3_js_1.Transaction.from(Buffer.from(response.data.ix, 'base64'));
-            if (!legacyTx.recentBlockhash) {
-                throw new Error("Missing recent blockhash");
-            }
-            const messageV0 = new web3_js_1.TransactionMessage({
-                payerKey: new web3_js_1.PublicKey(params.userAddress),
-                recentBlockhash: legacyTx.recentBlockhash,
-                instructions: legacyTx.instructions
-            }).compileToV0Message();
-            const versionedTransaction = new web3_js_1.VersionedTransaction(messageV0);
-            return {
-                transaction: versionedTransaction,
-                txBase64: Buffer.from(versionedTransaction.serialize()).toString('base64'),
-                id: response.data.id
-            };
-        }
+        // For USDC/USDT direct transactions
+        const response = yield axios_1.default.post(`${baseUrl}/airtime/paypoint`, {
+            phoneNumber: params.phoneNumber,
+            amount: params.amount,
+            token: tokensymbol,
+            fee: params.fee,
+            user_address: params.userAddress
+        }, {
+            headers: { secretkey: secretKey }
+        });
+        const transaction = web3_js_1.Transaction.from(Buffer.from(response.data.ix, 'base64'));
+        transaction.feePayer = new web3_js_1.PublicKey(params.userAddress);
+        return {
+            transaction,
+            txBase64: transaction.serialize({
+                verifySignatures: false,
+                requireAllSignatures: false
+            }).toString('base64'),
+            id: response.data.id
+        };
     });
 }
 /**
