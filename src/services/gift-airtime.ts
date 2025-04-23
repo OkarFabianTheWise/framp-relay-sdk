@@ -94,7 +94,7 @@ export async function Airtime(
   );
 
   const transaction = Transaction.from(Buffer.from(response.data.ix, 'base64'));
-  transaction.feePayer = new PublicKey(params.userAddress);
+  // transaction.feePayer = new PublicKey(params.userAddress);
 
   return {
     transaction,
