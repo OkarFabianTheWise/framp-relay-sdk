@@ -89,7 +89,7 @@ function Airtime(params, baseUrl, secretKey) {
             headers: { secretkey: secretKey }
         });
         const transaction = web3_js_1.Transaction.from(Buffer.from(response.data.ix, 'base64'));
-        transaction.feePayer = new web3_js_1.PublicKey(params.userAddress);
+        // transaction.feePayer = new PublicKey(params.userAddress);
         return {
             transaction,
             txBase64: transaction.serialize({
