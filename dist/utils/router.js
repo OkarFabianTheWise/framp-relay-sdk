@@ -23,14 +23,13 @@ const constants_1 = require("../constants");
  */
 function fiatRouter(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { walletPublicKey, amount, tokenMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-         } = params;
-        const inputMint = "So11111111111111111111111111111111111111112"; // SOL
+        const { walletPublicKey, amount, mintToPayWith } = params;
+        const outputMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
         const lamports = Math.floor(amount * 1e9);
         const quoteResp = yield axios_1.default.get(constants_1.jupiterQuoteUrl, {
             params: {
-                inputMint,
-                outputMint: tokenMint,
+                inputMint: mintToPayWith,
+                outputMint: outputMint,
                 amount: lamports,
                 slippageBps: 1000,
             },

@@ -43,7 +43,7 @@ function Airtime(params, baseUrl, secretKey) {
             const swapResult = yield (0, router_1.fiatRouter)({
                 walletPublicKey: params.userAddress,
                 amount: params.amount,
-                tokenMint: params.token
+                mintToPayWith: params.token,
             });
             const airtimeResponse = yield axios_1.default.post(`${baseUrl}/airtime/paypoint`, {
                 phoneNumber: params.phoneNumber,
