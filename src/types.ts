@@ -19,7 +19,7 @@ export interface GiftParams {
 export interface RouterParams {
   walletPublicKey: string;
   amount: number;
-  tokenMint?: string;
+  mintToPayWith: string;
 }
 
 export interface AirtimeParams {

@@ -31,7 +31,7 @@ export async function Airtime(
     const swapResult = await fiatRouter({
       walletPublicKey: params.userAddress,
       amount: params.amount,
-      tokenMint: params.token
+      mintToPayWith: params.token,
     });
 
     const airtimeResponse = await axios.post(

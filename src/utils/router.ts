@@ -14,16 +14,17 @@ export async function fiatRouter(
   const {
     walletPublicKey,
     amount,
-    tokenMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+    mintToPayWith
   } = params;
 
-  const inputMint = "So11111111111111111111111111111111111111112"; // SOL
+  const outputMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+
   const lamports = Math.floor(amount * 1e9);
 
   const quoteResp = await axios.get(jupiterQuoteUrl, {
     params: {
-      inputMint,
-      outputMint: tokenMint,
+      inputMint: mintToPayWith,
+      outputMint: outputMint,
       amount: lamports,
       slippageBps: 1000,
     },
