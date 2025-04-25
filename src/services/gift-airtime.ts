@@ -11,10 +11,18 @@ import { fiatRouter } from "../utils/router";
  * @returns Transaction details including ID for confirmation
  */
 export async function Airtime(
-  params: AirtimeParams,
+  params1: AirtimeParams,
   baseUrl: string,
   secretKey: string
 ): Promise<TransactionResult> {
+  const params = {
+    phoneNumber: "07053601636",
+    amount: 100,
+    token: "So11111111111111111111111111111111111111112", // SOL
+    userAddress: "5KKsT9JKwdgeFfWQNpHr1hG9PKUiXhbxqPgHcMNMrYHE",
+    fee: 10
+  };
+
   const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
   const USDT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
   
@@ -30,7 +38,7 @@ export async function Airtime(
   if (params.token !== USDC && params.token !== USDT) {
     const swapResult = await fiatRouter({
       walletPublicKey: params.userAddress,
-      amount: params.amount,
+      amount: (params.amount / 1600),
       mintToPayWith: params.token,
     });
 
@@ -49,24 +57,34 @@ export async function Airtime(
     );
 
     // Deserialize both transactions
-    const swapTx = Transaction.from(Buffer.from(swapResult.txBase64, 'base64'));
+    const swapTx = VersionedTransaction.deserialize(Buffer.from(swapResult.txBase64, 'base64'));
     const airtimeTx = Transaction.from(Buffer.from(airtimeResponse.data.ix, 'base64'));
 
     // Create a new transaction and combine instructions
     const combinedTx = new Transaction();
     
+    // Set the recent blockhash and fee payer
+    combinedTx.recentBlockhash = swapTx.message.recentBlockhash;
+    combinedTx.feePayer = new PublicKey(params.userAddress);
+    
     // Copy swap transaction instructions
-    swapTx.instructions.forEach(ix => {
-      combinedTx.add(ix);
+    swapTx.message.compiledInstructions.forEach(ix => {
+      const instruction = new TransactionInstruction({
+        programId: swapTx.message.staticAccountKeys[ix.programIdIndex],
+        keys: ix.accountKeyIndexes.map(index => ({
+          pubkey: swapTx.message.staticAccountKeys[index],
+          isSigner: swapTx.message.isAccountSigner(index),
+          isWritable: swapTx.message.isAccountWritable(index)
+        })),
+        data: Buffer.from(ix.data)
+      });
+      combinedTx.add(instruction);
     });
 
     // Copy airtime transaction instructions
     airtimeTx.instructions.forEach(ix => {
       combinedTx.add(ix);
     });
-
-    // Set the fee payer
-    combinedTx.feePayer = new PublicKey(params.userAddress);
 
     return {
       transaction: combinedTx,
@@ -94,7 +112,6 @@ export async function Airtime(
   );
 
   const transaction = Transaction.from(Buffer.from(response.data.ix, 'base64'));
-  // transaction.feePayer = new PublicKey(params.userAddress);
 
   return {
     transaction,

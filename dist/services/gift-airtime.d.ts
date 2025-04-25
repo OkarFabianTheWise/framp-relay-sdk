@@ -6,7 +6,7 @@ import { AirtimeParams, TransactionResult } from "../types";
  * @param secretKey AirbillsPay secret key
  * @returns Transaction details including ID for confirmation
  */
-export declare function Airtime(params: AirtimeParams, baseUrl: string, secretKey: string): Promise<TransactionResult>;
+export declare function Airtime(params1: AirtimeParams, baseUrl: string, secretKey: string): Promise<TransactionResult>;
 /**
  * Confirms an airtime transaction with AirbillsPay
  * @param id Transaction ID

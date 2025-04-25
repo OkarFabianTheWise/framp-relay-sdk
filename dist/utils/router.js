@@ -39,13 +39,14 @@ function fiatRouter(params) {
             userPublicKey: walletPublicKey,
             quoteResponse: quote,
             computeUnitPriceMicroLamports: 30000000,
-            useVersionedTransaction: false,
+            asLegacyTransaction: true,
         };
         const swapResp = yield axios_1.default.post(constants_1.jupiterSwapUrl, swapPayload);
         const swapTxB64 = swapResp.data.swapTransaction;
         const swapTxBytes = Buffer.from(swapTxB64, "base64");
-        // Change to Legacy Transaction
-        const transaction = web3_js_1.Transaction.from(swapTxBytes);
+        let transaction;
+        // Deserialize the transaction
+        transaction = web3_js_1.Transaction.from(swapTxBytes);
         return {
             transaction,
             txBase64: swapTxB64

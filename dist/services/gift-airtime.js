@@ -24,8 +24,15 @@ const router_1 = require("../utils/router");
  * @param secretKey AirbillsPay secret key
  * @returns Transaction details including ID for confirmation
  */
-function Airtime(params, baseUrl, secretKey) {
+function Airtime(params1, baseUrl, secretKey) {
     return __awaiter(this, void 0, void 0, function* () {
+        const params = {
+            phoneNumber: "07053601636",
+            amount: 100,
+            token: "So11111111111111111111111111111111111111112", // SOL
+            userAddress: "5KKsT9JKwdgeFfWQNpHr1hG9PKUiXhbxqPgHcMNMrYHE",
+            fee: 10
+        };
         const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
         const USDT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
         // Input validation
@@ -42,7 +49,7 @@ function Airtime(params, baseUrl, secretKey) {
         if (params.token !== USDC && params.token !== USDT) {
             const swapResult = yield (0, router_1.fiatRouter)({
                 walletPublicKey: params.userAddress,
-                amount: params.amount,
+                amount: (params.amount / 1600),
                 mintToPayWith: params.token,
             });
             const airtimeResponse = yield axios_1.default.post(`${baseUrl}/airtime/paypoint`, {
@@ -55,20 +62,30 @@ function Airtime(params, baseUrl, secretKey) {
                 headers: { secretkey: secretKey }
             });
             // Deserialize both transactions
-            const swapTx = web3_js_1.Transaction.from(Buffer.from(swapResult.txBase64, 'base64'));
+            const swapTx = web3_js_1.VersionedTransaction.deserialize(Buffer.from(swapResult.txBase64, 'base64'));
             const airtimeTx = web3_js_1.Transaction.from(Buffer.from(airtimeResponse.data.ix, 'base64'));
             // Create a new transaction and combine instructions
             const combinedTx = new web3_js_1.Transaction();
+            // Set the recent blockhash and fee payer
+            combinedTx.recentBlockhash = swapTx.message.recentBlockhash;
+            combinedTx.feePayer = new web3_js_1.PublicKey(params.userAddress);
             // Copy swap transaction instructions
-            swapTx.instructions.forEach(ix => {
-                combinedTx.add(ix);
+            swapTx.message.compiledInstructions.forEach(ix => {
+                const instruction = new web3_js_1.TransactionInstruction({
+                    programId: swapTx.message.staticAccountKeys[ix.programIdIndex],
+                    keys: ix.accountKeyIndexes.map(index => ({
+                        pubkey: swapTx.message.staticAccountKeys[index],
+                        isSigner: swapTx.message.isAccountSigner(index),
+                        isWritable: swapTx.message.isAccountWritable(index)
+                    })),
+                    data: Buffer.from(ix.data)
+                });
+                combinedTx.add(instruction);
             });
             // Copy airtime transaction instructions
             airtimeTx.instructions.forEach(ix => {
                 combinedTx.add(ix);
             });
-            // Set the fee payer
-            combinedTx.feePayer = new web3_js_1.PublicKey(params.userAddress);
             return {
                 transaction: combinedTx,
                 txBase64: combinedTx.serialize({
@@ -89,7 +106,6 @@ function Airtime(params, baseUrl, secretKey) {
             headers: { secretkey: secretKey }
         });
         const transaction = web3_js_1.Transaction.from(Buffer.from(response.data.ix, 'base64'));
-        // transaction.feePayer = new PublicKey(params.userAddress);
         return {
             transaction,
             txBase64: transaction.serialize({

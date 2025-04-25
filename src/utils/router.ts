@@ -1,4 +1,4 @@
-import { Transaction, VersionedTransaction } from "@solana/web3.js";
+import { Transaction } from "@solana/web3.js";
 import axios from "axios";
 import { RouterParams, TransactionResult } from "../types";
 import { jupiterQuoteUrl, jupiterSwapUrl } from "../constants";
@@ -35,15 +35,17 @@ export async function fiatRouter(
     userPublicKey: walletPublicKey,
     quoteResponse: quote,
     computeUnitPriceMicroLamports: 30000000,
-    useVersionedTransaction: false,
+    asLegacyTransaction: true,
   };
 
   const swapResp = await axios.post(jupiterSwapUrl, swapPayload);
   const swapTxB64 = swapResp.data.swapTransaction;
   const swapTxBytes = Buffer.from(swapTxB64, "base64");
-  // Change to Legacy Transaction
-  const transaction = Transaction.from(swapTxBytes);
 
+  let transaction;
+
+  // Deserialize the transaction
+  transaction = Transaction.from(swapTxBytes);
   return {
     transaction,
     txBase64: swapTxB64
