@@ -61,7 +61,7 @@ function Airtime(params, baseUrl, secretKey) {
             const combinedTx = new web3_js_1.Transaction();
             // Set the recent blockhash and fee payer
             combinedTx.recentBlockhash = swapTx.message.recentBlockhash;
-            combinedTx.feePayer = new web3_js_1.PublicKey(params.userAddress);
+            // combinedTx.feePayer = new PublicKey(params.userAddress);
             // Copy swap transaction instructions
             swapTx.message.compiledInstructions.forEach(ix => {
                 const instruction = new web3_js_1.TransactionInstruction({
