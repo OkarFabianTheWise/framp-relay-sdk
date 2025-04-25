@@ -23,7 +23,7 @@ class FrampRelayer {
         this.solscanApiUrl = (config === null || config === void 0 ? void 0 : config.solscanApiUrl) || "https://pro-api.solscan.io/v2.0/transaction/detail";
         this.solscanApiKey = (config === null || config === void 0 ? void 0 : config.solscanApiKey) || process.env.SOLSCAN_API_KEY || "";
         this.timeout = (config === null || config === void 0 ? void 0 : config.timeout) || 60000;
-        this.airbillsVendorUrl = (config === null || config === void 0 ? void 0 : config.airbillsVendorUrl) || process.env.AIRBILLS_VENDOR_URL || "/bills";
+        this.airbillsVendorUrl = (config === null || config === void 0 ? void 0 : config.airbillsVendorUrl) || process.env.AIRBILLS_VENDOR_URL || '/bills';
         this.airbillsSecretKey = (config === null || config === void 0 ? void 0 : config.airbillsSecretKey) || process.env.AIRBILLS_SECRET_KEY || "";
     }
     giftToken(params) {

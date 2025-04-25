@@ -24,15 +24,8 @@ const router_1 = require("../utils/router");
  * @param secretKey AirbillsPay secret key
  * @returns Transaction details including ID for confirmation
  */
-function Airtime(params1, baseUrl, secretKey) {
+function Airtime(params, baseUrl, secretKey) {
     return __awaiter(this, void 0, void 0, function* () {
-        const params = {
-            phoneNumber: "07053601636",
-            amount: 100,
-            token: "So11111111111111111111111111111111111111112", // SOL
-            userAddress: "5KKsT9JKwdgeFfWQNpHr1hG9PKUiXhbxqPgHcMNMrYHE",
-            fee: 10
-        };
         const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
         const USDT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
         // Input validation
@@ -49,7 +42,7 @@ function Airtime(params1, baseUrl, secretKey) {
         if (params.token !== USDC && params.token !== USDT) {
             const swapResult = yield (0, router_1.fiatRouter)({
                 walletPublicKey: params.userAddress,
-                amount: (params.amount / 1600),
+                amount: params.amount,
                 mintToPayWith: params.token,
             });
             const airtimeResponse = yield axios_1.default.post(`${baseUrl}/airtime/paypoint`, {
