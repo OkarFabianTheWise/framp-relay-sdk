@@ -57,34 +57,11 @@ function Airtime(params, baseUrl, secretKey) {
             // Deserialize both transactions
             const swapTx = web3_js_1.VersionedTransaction.deserialize(Buffer.from(swapResult.txBase64, 'base64'));
             const airtimeTx = web3_js_1.Transaction.from(Buffer.from(airtimeResponse.data.ix, 'base64'));
-            // Create a new transaction starting with the airtime transaction
-            const combinedTx = airtimeTx; // This preserves the partial signatures
-            // Set the blockhash from the swap transaction
-            combinedTx.recentBlockhash = swapTx.message.recentBlockhash;
-            // Copy swap transaction instructions to the beginning
-            swapTx.message.compiledInstructions.reverse().forEach(ix => {
-                const instruction = new web3_js_1.TransactionInstruction({
-                    programId: swapTx.message.staticAccountKeys[ix.programIdIndex],
-                    keys: ix.accountKeyIndexes.map(index => ({
-                        pubkey: swapTx.message.staticAccountKeys[index],
-                        isSigner: swapTx.message.isAccountSigner(index),
-                        isWritable: swapTx.message.isAccountWritable(index)
-                    })),
-                    data: Buffer.from(ix.data)
-                });
-                // Add swap instructions at the beginning
-                combinedTx.instructions.unshift(instruction);
-            });
-            // Copy airtime transaction instructions
-            airtimeTx.instructions.forEach(ix => {
-                combinedTx.add(ix);
-            });
             return {
-                transaction: combinedTx,
-                txBase64: combinedTx.serialize({
-                    verifySignatures: false,
-                    requireAllSignatures: false
-                }).toString('base64'),
+                transaction: null,
+                txBase64: swapResult.txBase64,
+                swapTransaction: swapTx,
+                airtimeTransaction: airtimeTx,
                 id: airtimeResponse.data.id
             };
         }

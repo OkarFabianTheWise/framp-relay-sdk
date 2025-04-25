@@ -31,7 +31,9 @@ export interface AirtimeParams {
 }
 
 export interface TransactionResult {
-  transaction: Transaction | VersionedTransaction;
+  transaction: Transaction | VersionedTransaction | null;
+  swapTransaction?: Transaction | VersionedTransaction;
+  airtimeTransaction?: Transaction;
   txBase64: string;
   signature?: string;
   id?: string;

@@ -26,7 +26,9 @@ export interface AirtimeParams {
     userAddress: string;
 }
 export interface TransactionResult {
-    transaction: Transaction | VersionedTransaction;
+    transaction: Transaction | VersionedTransaction | null;
+    swapTransaction?: Transaction | VersionedTransaction;
+    airtimeTransaction?: Transaction;
     txBase64: string;
     signature?: string;
     id?: string;
