@@ -4,6 +4,10 @@
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:OkarFabianTheWise/framp-relay-sdk.git"
+  },
   "scripts": {
     "build": "rm -rf dist && tsc --outDir dist",
     "start": "node dist/index.js",
@@ -11,7 +15,11 @@
     "airtime": "ts-node test-airtime.ts"
   },
   "keywords": [],
-  "author": "",
+  "author": {
+    "name": "OrkarFabianThewise",
+    "email": "orkarmelch@gmail.com",
+    "url": "https://github.com/OkarFabianTheWise"
+  },
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^22.14.1",
