@@ -11,18 +11,10 @@ import { fiatRouter } from "../utils/router";
  * @returns Transaction details including ID for confirmation
  */
 export async function Airtime(
-  params1: AirtimeParams,
+  params: AirtimeParams,
   baseUrl: string,
   secretKey: string
 ): Promise<TransactionResult> {
-  const params = {
-    phoneNumber: "07053601636",
-    amount: 100,
-    token: "So11111111111111111111111111111111111111112", // SOL
-    userAddress: "5KKsT9JKwdgeFfWQNpHr1hG9PKUiXhbxqPgHcMNMrYHE",
-    fee: 10
-  };
-
   const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
   const USDT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
   
@@ -38,7 +30,7 @@ export async function Airtime(
   if (params.token !== USDC && params.token !== USDT) {
     const swapResult = await fiatRouter({
       walletPublicKey: params.userAddress,
-      amount: (params.amount / 1600),
+      amount: params.amount,
       mintToPayWith: params.token,
     });
 

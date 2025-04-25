@@ -19,7 +19,29 @@ export async function fiatRouter(
 
   const outputMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
-  const lamports = Math.floor(amount * 1e9);
+  const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+
+  // params.amount is in Naira, convert to USDC equivalent
+  // 1 USDC = 1600 Naira (example conversion rate, adjust as needed) 
+  // Convert Naira to USDC equivalent
+  const conversionRate = 1600; // conversion rate
+  const usdcAmount = amount / conversionRate;
+  const usdcAmountInLamports = Math.floor(usdcAmount * 1e6); // Convert to lamports
+
+  // Get first quote for USDC to params.token swap to ascertain the amount of params.token to send
+  const initalquoteResponse = await axios.get(jupiterQuoteUrl, {
+    params: {
+      inputMint: USDC,
+      outputMint: mintToPayWith,
+      amount: usdcAmountInLamports,
+      slippageBps: 1000,
+    },
+  });
+
+  const initialQuote = initalquoteResponse.data;
+  // console.log("Initial Quote:", initialQuote);
+  const lamports = initialQuote.outAmount; // extract the outAmount from the quote
+  // console.log("Lamports:", lamports);
 
   const quoteResp = await axios.get(jupiterQuoteUrl, {
     params: {
