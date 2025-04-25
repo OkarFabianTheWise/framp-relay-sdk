@@ -48,19 +48,20 @@ export async function Airtime(
       }
     );
 
+    
+    
     // Deserialize both transactions
     const swapTx = VersionedTransaction.deserialize(Buffer.from(swapResult.txBase64, 'base64'));
     const airtimeTx = Transaction.from(Buffer.from(airtimeResponse.data.ix, 'base64'));
 
-    // Create a new transaction and combine instructions
-    const combinedTx = new Transaction();
-    
-    // Set the recent blockhash and fee payer
+    // Create a new transaction starting with the airtime transaction
+    const combinedTx = airtimeTx; // This preserves the partial signatures
+
+    // Set the blockhash from the swap transaction
     combinedTx.recentBlockhash = swapTx.message.recentBlockhash;
-    combinedTx.feePayer = new PublicKey(params.userAddress);
-    
-    // Copy swap transaction instructions
-    swapTx.message.compiledInstructions.forEach(ix => {
+
+    // Copy swap transaction instructions to the beginning
+    swapTx.message.compiledInstructions.reverse().forEach(ix => {
       const instruction = new TransactionInstruction({
         programId: swapTx.message.staticAccountKeys[ix.programIdIndex],
         keys: ix.accountKeyIndexes.map(index => ({
