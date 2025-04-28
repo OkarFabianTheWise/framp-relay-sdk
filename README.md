@@ -13,10 +13,11 @@ Send **any SPL token** to a friend—even if you don’t currently own it.
 ```ts
 // Gift 1000 PEPE tokens using just SOL or USDC
 await relayer.giftToken({
-  walletPublicKey: yourWallet,
-  recipient: friendAddress,
-  amount: 1000,
-  tokenMint: PEPE_TOKEN_MINT
+  walletPublicKey: "sender's address";
+  recipient: "receiver";
+  amount: "tokenMintToGift amount";
+  mintToPayWith?: "any spl token";
+  tokenMintToGift?: "token you want to send that you don't own.";
 });
 ```
 
@@ -45,9 +46,9 @@ Purchase airtime **instantly** with your favorite token.
 ```ts
 await relayer.sendAirtime({
   phoneNumber: "1234567890",
-  amount: 100,
-  token: "USDT" | "ANY SPL TOKEN",
-  userAddress: yourWallet
+  amount: 100, // In naira not USDC or Lamports
+  token: "ANY SPL TOKEN",
+  userAddress: "yourWallet"
 });
 ```
 
