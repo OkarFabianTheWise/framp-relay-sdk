@@ -1,6 +1,6 @@
 import axios from "axios";
 import { RouterParams, TransactionResult, UltraErrorCode, UltraOrderResponse, UltraSwapError, UltraSwapResponse } from "../types";
-import { ULTRA_API_BASE, REFERRAL_FEE_BPS, jupiterSwapUrl, REFERRAL_ACCOUNT } from "../constants";
+import { ULTRA_API_BASE, REFERRAL_FEE_BPS, REFERRAL_ACCOUNT } from "../constants";
 import { VersionedTransaction } from "@solana/web3.js";
 
 /**
