@@ -1,7 +1,7 @@
-import { Transaction } from "@solana/web3.js";
 import axios from "axios";
-import { RouterParams, TransactionResult } from "../types";
-import { jupiterQuoteUrl, jupiterSwapUrl } from "../constants";
+import { RouterParams, TransactionResult, UltraErrorCode, UltraOrderResponse, UltraSwapError, UltraSwapResponse } from "../types";
+import { ULTRA_API_BASE, REFERRAL_FEE_BPS, jupiterSwapUrl, REFERRAL_ACCOUNT } from "../constants";
+import { VersionedTransaction } from "@solana/web3.js";
 
 /**
  * Handles token gift transactions using Jupiter Exchange
@@ -17,59 +17,101 @@ export async function fiatRouter(
     mintToPayWith
   } = params;
 
-  const outputMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-
-  const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-
-  // params.amount is in Naira, convert to USDC equivalent
-  // 1 USDC = 1600 Naira (example conversion rate, adjust as needed) 
-  // Convert Naira to USDC equivalent
-  const conversionRate = 1600; // conversion rate
+  const outputMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"; // USDC
+  
+  // Convert amount to proper format
+  const conversionRate = 1600;
   const usdcAmount = amount / conversionRate;
-  const usdcAmountInLamports = Math.floor(usdcAmount * 1e6); // Convert to lamports
+  const amountInLamports = Math.floor(usdcAmount * 1e6);
 
-  // Get first quote for USDC to params.token swap to ascertain the amount of params.token to send
-  const initalquoteResponse = await axios.get(jupiterQuoteUrl, {
-    params: {
-      inputMint: USDC,
-      outputMint: mintToPayWith,
-      amount: usdcAmountInLamports,
-      slippageBps: 1000,
-    },
-  });
+  try {
+    // Create order URL with parameters
+    const orderUrl = new URL(`${ULTRA_API_BASE}/order`);
+    orderUrl.searchParams.set('inputMint', mintToPayWith);
+    orderUrl.searchParams.set('outputMint', outputMint);
+    orderUrl.searchParams.set('amount', amountInLamports.toString());
+    orderUrl.searchParams.set('taker', walletPublicKey);
 
-  const initialQuote = initalquoteResponse.data;
-  // console.log("Initial Quote:", initialQuote);
-  const lamports = initialQuote.outAmount; // extract the outAmount from the quote
-  // console.log("Lamports:", lamports);
+    if (REFERRAL_ACCOUNT) {
+      orderUrl.searchParams.set('referralAccount', REFERRAL_ACCOUNT);
+      orderUrl.searchParams.set('referralFee', REFERRAL_FEE_BPS.toString());
+    }
 
-  const quoteResp = await axios.get(jupiterQuoteUrl, {
-    params: {
-      inputMint: mintToPayWith,
-      outputMint: outputMint,
-      amount: lamports,
-      slippageBps: 1000,
-    },
-  });
+    // Get order
+    const orderResponse = await axios.get<UltraOrderResponse>(orderUrl.toString());
 
-  const quote = quoteResp.data;
-  const swapPayload = {
-    userPublicKey: walletPublicKey,
-    quoteResponse: quote,
-    computeUnitPriceMicroLamports: 30000000,
-    asLegacyTransaction: true,
-  };
+    if (!orderResponse.data.transaction) {
+      throw new Error('No transaction in order response');
+    }
 
-  const swapResp = await axios.post(jupiterSwapUrl, swapPayload);
-  const swapTxB64 = swapResp.data.swapTransaction;
-  const swapTxBytes = Buffer.from(swapTxB64, "base64");
+    const { transaction: txBase64, requestId } = orderResponse.data;
 
-  let transaction;
+    // Create versioned transaction
+    const transaction = VersionedTransaction.deserialize(
+      Buffer.from(txBase64, 'base64')
+    );
 
-  // Deserialize the transaction
-  transaction = Transaction.from(swapTxBytes);
-  return {
-    transaction,
-    txBase64: swapTxB64
-  };
+    // check if requestId is present
+    if (!requestId) {
+      throw new Error('No requestId in order response');
+    }
+
+    return {
+      transaction: null, // Original transaction field kept for compatibility
+      txBase64,
+      swapTransaction: transaction,
+      requestId // Added for Ultra API execution
+    };
+  } catch (error: any) {
+    throw new Error(`Ultra swap error: ${error.message}`);
+  }
+}
+
+export async function executeUltraSwap(
+  signedTxBase64: string,
+  requestId: string
+): Promise<UltraSwapResponse> {
+  try {
+    const response = await axios.post(`${ULTRA_API_BASE}/execute`, {
+      signedTransaction: signedTxBase64,
+      requestId
+    });
+
+    return response.data;
+  } catch (err: unknown) {
+    const error = err as { response?: { data: UltraSwapError } };
+    
+    if (error.response?.data) {
+      const { code, error: errorMessage } = error.response.data;
+      
+      switch (code) {
+        // Ultra Endpoint Errors
+        case UltraErrorCode.MISSING_CACHED_ORDER:
+          throw new Error('Order expired or not found. Please create a new order.');
+        case UltraErrorCode.INVALID_SIGNED_TRANSACTION:
+          throw new Error('Invalid transaction signature. Please check wallet signing.');
+        case UltraErrorCode.INVALID_MESSAGE_BYTES:
+          throw new Error('Invalid transaction format. Please ensure correct transaction handling.');
+          
+        // Aggregator Swap Errors
+        case UltraErrorCode.FAILED_TO_LAND:
+          throw new Error('Transaction failed to complete on the network. Please try again.');
+        case UltraErrorCode.INVALID_TRANSACTION:
+          throw new Error('Invalid transaction structure. Please check transaction parameters.');
+        case UltraErrorCode.TRANSACTION_NOT_SIGNED:
+          throw new Error('Transaction is not fully signed. Please check wallet signing.');
+          
+        // RFQ Errors
+        case UltraErrorCode.RFQ_QUOTE_EXPIRED:
+          throw new Error('Quote expired. Please request a new quote.');
+        case UltraErrorCode.RFQ_SWAP_REJECTED:
+          throw new Error('Swap was rejected. Please try again or use a different route.');
+          
+        default:
+          throw new Error(`Ultra swap execution error: ${errorMessage} (Code: ${code})`);
+      }
+    }
+    
+    throw new Error('Ultra swap execution failed with unknown error');
+  }
 }
